@@ -17,9 +17,6 @@ class UploadCSVView(APIView):
     def post(self, request, *args, **kwargs):
         csv_file: TemporaryUploadedFile = request.FILES['file']
 
-        if not csv_file:
-            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             file_path = os.path.join(SHARED_FOLDER, csv_file.name)
             with open(file_path, 'wb+') as destination:

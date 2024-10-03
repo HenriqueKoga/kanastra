@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 
-from .views import UploadCSVView
+from billing_system.views.upload_csv_view import UploadCSVView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
