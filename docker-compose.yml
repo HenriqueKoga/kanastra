@@ -4,6 +4,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
+      - shared_volume:/app/shared
     ports:
       - "8000:8000"
     networks:
@@ -16,6 +17,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.worker
+    volumes:
+      - shared_volume:/app/shared
     depends_on:
       - db
       - rabbitmq
@@ -46,6 +49,7 @@ services:
 
 volumes:
   postgres_data: {}
+  shared_volume: {}
 
 networks:
   app_network:

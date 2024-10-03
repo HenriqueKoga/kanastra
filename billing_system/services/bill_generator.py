@@ -1,8 +1,17 @@
 import logging
+from abc import ABC, abstractmethod
 
 
-class BillGenerator:
-    def generate_bill(self, debt_id):
-        # Simulação de geração de boleto
-        logging.info(f"Generating bill for debt ID: {debt_id}")
-        return True  # Retorne True se a geração for bem-sucedida
+class BillGenerator(ABC):
+    @classmethod
+    @abstractmethod
+    def generate_bill(cls, debt_id: str) -> bool:
+        pass
+
+
+class BillPDFGenerator(BillGenerator):
+
+    @classmethod
+    def generate_bill(cls, debt_id: str) -> bool:
+        logging.info(f'Generating PDF bill for debt_id: {debt_id}')
+        return True

@@ -4,7 +4,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key')
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
@@ -63,12 +63,19 @@ DATABASES = {
 }
 
 # Configurações do Celery e RabbitMQ
-CELERY_BROKER_URL = 'amqp://rabbitmq:5672'
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_TASK_RESULT_EXPIRES = 3600  # Results will expire after 1 hour
+RABBITMQ_USER = os.environ.get('RABBITMQ_USER', 'root')
+RABBITMQ_PASSWORD = os.environ.get('RABBITMQ_PASSWORD', 'root')
+RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST', 'rabbitmq')
+RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT', '5672')
 
-# Configurações de Email (simulação)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Configurações do Celery
+CELERY_BROKER_URL = f'amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}//'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_TASK_RESULT_EXPIRES = 3600
+
 
 STATIC_URL = '/static/'
 
@@ -78,3 +85,5 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_PERMISSION_CLASSES': [],
 }
+
+SHARED_FOLDER = '/app/shared'

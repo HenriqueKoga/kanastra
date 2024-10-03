@@ -1,36 +1,34 @@
 import logging
+import os
 
-import pandas as pd
-from rest_framework import status, viewsets
+from django.core.files.uploadedfile import TemporaryUploadedFile
+from rest_framework import status
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Debt
-from .serializers import DebtSerializer
-from .tasks import process_debt
+from billing_system.settings import SHARED_FOLDER
+from billing_system.tasks.debts_tasks import process_csv
 
 
-class DebtViewSet(viewsets.ModelViewSet):
-    queryset = Debt.objects.all()
-    serializer_class = DebtSerializer
+class UploadCSVView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
 
-    def create(self, request, *args, **kwargs):
-        # Processar arquivo CSV
-        csv_file = request.FILES.get('file')
+    def post(self, request, *args, **kwargs):
+        csv_file: TemporaryUploadedFile = request.FILES['file']
+
         if not csv_file:
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        df = pd.read_csv(csv_file)
-        for _, row in df.iterrows():
-            debt_id = row['debtId']
-            # Verificar se o débito já existe
-            if not Debt.objects.filter(debt_id=debt_id).exists():
-                serializer = self.get_serializer(data=row)
-                if serializer.is_valid():
-                    serializer.save()
-                    # Enfileirar tarefa para processamento do débito
-                    process_debt.delay(debt_id)
-            else:
-                # Log para evitar duplicação
-                logging.warning(f"Debt with ID {debt_id} already exists, skipping.")
+        try:
+            file_path = os.path.join(SHARED_FOLDER, csv_file.name)
+            with open(file_path, 'wb+') as destination:
+                for chunk in csv_file.chunks():
+                    destination.write(chunk)
 
-        return Response({"message": "Debts processed."}, status=status.HTTP_201_CREATED)
+            process_csv.delay(file_path)
+
+            return Response({"message": "Started processing debts"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logging.exception(f"Error processing debts: {e}")
+            return Response({"error": "Error processing debts"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

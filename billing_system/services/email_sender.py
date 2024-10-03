@@ -1,10 +1,18 @@
-# billing/services/email_sender.py
-
 import logging
+from abc import ABC, abstractmethod
 
 
-class EmailSender:
-    def send_email(self, email, subject, message):
-        # Simulação de envio de e-mail
-        logging.info(f"Sending email to {email}: {subject}")
-        return True  # Retorne True se o envio for bem-sucedido
+class EmailSender(ABC):
+
+    @classmethod
+    @abstractmethod
+    def send_email(cls, email: str, subject: str, message: str) -> bool:
+        pass
+
+
+class EmailSenderSMTP(EmailSender):
+
+    @classmethod
+    def send_email(cls, email: str, subject: str, message: str) -> bool:
+        logging.info(f"Sending email to {email} - {subject}:{message}")
+        return True
